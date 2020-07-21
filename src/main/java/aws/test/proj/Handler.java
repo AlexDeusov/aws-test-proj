@@ -1,71 +1,60 @@
 package aws.test.proj;
 
-import aws.test.proj.dto.PostDto;
+import aws.test.proj.exception.ATPException;
 import aws.test.proj.exception.CompressionException;
-import aws.test.proj.exception.SystemManagerException;
+import aws.test.proj.post.PostDto;
+import aws.test.proj.request.Request;
+import aws.test.proj.status.StatusType;
 import aws.test.proj.utils.HttpUtils;
 import aws.test.proj.utils.S3Utils;
 import aws.test.proj.utils.SystemManagerUtils;
-import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
-import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+import software.amazon.awssdk.utils.CollectionUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.Map;
+import java.util.List;
 import java.util.Objects;
-import java.util.zip.DeflaterOutputStream;
+import java.util.zip.GZIPOutputStream;
 
-public class Handler implements RequestHandler<Map<String, Integer>, String> {
+public class Handler {
 
 	private final ObjectMapper MAPPER = new ObjectMapper();
 
-	@Override
-	public String handleRequest(Map<String, Integer> input, Context context) {
+	public StatusType handleRequest(Request request) throws ATPException {
 
-		LambdaLogger logger = context.getLogger();
-		System.getenv().keySet().forEach(key -> {
-			try {
-				String value = SystemManagerUtils.findParameterByKey(key);
-				if (Objects.nonNull(value)) {
-					logger.log("Getting '" + value + "' value by '" + key + "' key.\n");
-				}
-			} catch (SystemManagerException e) {
-				logger.log(e.getMessage() + "\n");
-			}
-		});
-
-		Integer id = input.get("id");
-		if (Objects.nonNull(id)) {
+		Integer userId = request.getId();
+		if (Objects.nonNull(userId)) {
 			try {
 				String baseUrl = SystemManagerUtils.getRestApiBaseUrlParameter();
 
-				var response = HttpUtils.get(baseUrl + id);
-				PostDto postDto = MAPPER.readValue(response.body(), PostDto.class);
+				var response = HttpUtils.get(baseUrl + userId);
+				var posts = MAPPER.readValue(response.body(), new TypeReference<List<PostDto>>() {});
 
-				ByteBuffer byteBuffer = compress(postDto);
+				if (CollectionUtils.isNullOrEmpty(posts)) {
+					return StatusType.EMPTY_POST_LIST;
+				}
 
-				PutObjectResponse uploadResult = S3Utils.uploadObject(byteBuffer, postDto.getUserId());
+				ByteBuffer byteBuffer = compress(posts);
+				S3Utils.uploadObject(byteBuffer, userId);
 
-				return "Operation has completed successfully (upload result: " + uploadResult.toString() + ")";
+				return StatusType.SUCCESS;
 			} catch (Exception e) {
-				return e.getMessage();
+				throw new ATPException(e.getMessage());
 			}
 		}
-		return "Mandatory field 'id' is missing!";
+		return StatusType.NO_ID;
 	}
 
-	private ByteBuffer compress(PostDto dto) throws CompressionException {
+	private ByteBuffer compress(List<PostDto> posts) throws CompressionException {
 
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		try (OutputStream out = new DeflaterOutputStream(outputStream)) {
-			out.write(MAPPER.writeValueAsBytes(dto));
+		try (GZIPOutputStream gzipStream = new GZIPOutputStream(outputStream)) {
+			gzipStream.write(MAPPER.writeValueAsBytes(posts));
 		} catch (IOException e) {
-			throw new CompressionException(dto);
+			throw new CompressionException(posts);
 		}
 		return ByteBuffer.wrap(outputStream.toByteArray());
 	}

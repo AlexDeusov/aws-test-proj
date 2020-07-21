@@ -1,24 +1,19 @@
 package aws.test.proj.utils;
 
 import aws.test.proj.exception.SystemManagerException;
+import aws.test.proj.factory.SystemManagerFactory;
 import software.amazon.awssdk.services.ssm.SsmAsyncClient;
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
 import software.amazon.awssdk.services.ssm.model.GetParameterResponse;
 
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 public final class SystemManagerUtils {
 
-	private final static SsmAsyncClient ASYNC_CLIENT = SsmAsyncClient.builder().build();
+	private final static SsmAsyncClient ASYNC_CLIENT = SystemManagerFactory.systemManagerAsyncClient();
 
 	private final static String REST_API_BASE_URL_KEY = "REST_API_BASE_URL";
 	private final static String S3_BUCKET_NAME_KEY = "S3_BUCKET_NAME_KEY";
-
-	public static String findParameterByKey(String parameterKey) throws SystemManagerException {
-
-		return getParameter(parameterKey);
-	}
 
 	public static String getRestApiBaseUrlParameter() throws SystemManagerException {
 
