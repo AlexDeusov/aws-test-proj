@@ -34,7 +34,7 @@ public class Handler implements RequestHandler<Map<String, Integer>, String> {
 
 				PutObjectResponse uploadResult = S3Utils.uploadObject(byteBuffer, postDto.getUserId());
 
-				return "Operation has completed successfully (expiration: " + uploadResult.expiration() + ")";
+				return "Operation has completed successfully (upload result: " + uploadResult.toString() + ")";
 			} catch (Exception e) {
 				return e.getMessage();
 			}
