@@ -25,12 +25,13 @@ jar {
 }
 
 dependencies {
-    compile group: 'org.slf4j', name: 'slf4j-nop', version: '1.7.30'
+    implementation 'org.slf4j:slf4j-nop:1.7.30'
 
-    compile group: 'com.amazonaws', name: 'aws-lambda-java-core', version: '1.2.1'
-
-    compile group: 'software.amazon.awssdk', name: 'ssm', version: '2.13.56'
-    compile group: 'software.amazon.awssdk', name: 's3', version: '2.13.56'
-
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.6.6'
+    implementation platform('software.amazon.awssdk:bom:2.13.54')
+    implementation('software.amazon.awssdk:s3') {
+        exclude group: 'software.amazon.awssdk', module: 'apache-client'
+    }
+    implementation('software.amazon.awssdk:ssm') {
+        exclude group: 'software.amazon.awssdk', module: 'apache-client'
+    }
 }
