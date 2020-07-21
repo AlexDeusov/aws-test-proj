@@ -25,6 +25,8 @@ jar {
 }
 
 dependencies {
+    compile group: 'org.slf4j', name: 'slf4j-nop', version: '1.7.30'
+
     compile group: 'com.amazonaws', name: 'aws-lambda-java-core', version: '1.2.1'
 
     compile group: 'software.amazon.awssdk', name: 'ssm', version: '2.13.56'

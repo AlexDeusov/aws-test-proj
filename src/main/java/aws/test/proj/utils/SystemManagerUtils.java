@@ -5,6 +5,7 @@ import software.amazon.awssdk.services.ssm.SsmAsyncClient;
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
 import software.amazon.awssdk.services.ssm.model.GetParameterResponse;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 public final class SystemManagerUtils {
@@ -12,23 +13,16 @@ public final class SystemManagerUtils {
 	private final static SsmAsyncClient ASYNC_CLIENT = SsmAsyncClient.builder().build();
 
 	private final static String REST_API_BASE_URL_KEY = "REST_API_BASE_URL";
-	private final static String ACCESS_KEY = "ACCESS_KEY";
-	private final static String SECRET_KEY = "SECRET_KEY";
 	private final static String S3_BUCKET_NAME_KEY = "S3_BUCKET_NAME_KEY";
+
+	public static String findParameterByKey(String parameterKey) throws SystemManagerException {
+
+		return getParameter(parameterKey);
+	}
 
 	public static String getRestApiBaseUrlParameter() throws SystemManagerException {
 
 		return getParameter(REST_API_BASE_URL_KEY);
-	}
-
-	public static String getAccessKeyParameter() throws SystemManagerException {
-
-		return getParameter(ACCESS_KEY);
-	}
-
-	public static String getSecretKeyParameter() throws SystemManagerException {
-
-		return getParameter(SECRET_KEY);
 	}
 
 	public static String getS3BucketNameParameter() throws SystemManagerException {

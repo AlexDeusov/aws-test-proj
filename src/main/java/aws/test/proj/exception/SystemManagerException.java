@@ -4,6 +4,6 @@ public class SystemManagerException extends ATPException {
 
 	public SystemManagerException(String parameterKey) {
 
-		super("Cannot get " + parameterKey + " SSM value");
+		super("Cannot get '" + parameterKey + "' value");
 	}
 }

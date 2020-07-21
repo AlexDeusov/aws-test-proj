@@ -2,15 +2,19 @@ package aws.test.proj;
 
 import aws.test.proj.dto.PostDto;
 import aws.test.proj.exception.CompressionException;
+import aws.test.proj.exception.SystemManagerException;
 import aws.test.proj.utils.HttpUtils;
 import aws.test.proj.utils.S3Utils;
 import aws.test.proj.utils.SystemManagerUtils;
 import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Objects;
@@ -23,10 +27,23 @@ public class Handler implements RequestHandler<Map<String, Integer>, String> {
 	@Override
 	public String handleRequest(Map<String, Integer> input, Context context) {
 
+		LambdaLogger logger = context.getLogger();
+		System.getenv().keySet().forEach(key -> {
+			try {
+				String value = SystemManagerUtils.findParameterByKey(key);
+				if (Objects.nonNull(value)) {
+					logger.log("Getting '" + value + "' value by '" + key + "' key.\n");
+				}
+			} catch (SystemManagerException e) {
+				logger.log(e.getMessage() + "\n");
+			}
+		});
+
 		Integer id = input.get("id");
 		if (Objects.nonNull(id)) {
 			try {
 				String baseUrl = SystemManagerUtils.getRestApiBaseUrlParameter();
+
 				var response = HttpUtils.get(baseUrl + id);
 				PostDto postDto = MAPPER.readValue(response.body(), PostDto.class);
 
